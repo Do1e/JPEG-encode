@@ -3,6 +3,7 @@ import numpy as np
 import os
 from struct import pack
 
+# 亮度量化表
 std_luminance_quant_tbl = np.array(
 	[
 		[16, 11, 10, 16, 24, 40, 51, 61],
@@ -16,72 +17,90 @@ std_luminance_quant_tbl = np.array(
 	],
 	np.uint8
 )
+# 色度量化表
 std_chrominance_quant_tbl = np.array(
 	[
-		[ 34, 36, 48, 94,198,198,198,198],
-		[ 36, 42, 52,132,198,198,198,198],
-		[ 48, 52,112,198,198,198,198,198],
-		[ 94,132,198,198,198,198,198,198],
-		[198,198,198,198,198,198,198,198],
-		[198,198,198,198,198,198,198,198],
-		[198,198,198,198,198,198,198,198],
-		[198,198,198,198,198,198,198,198]
+		[17, 18, 24, 47, 99, 99, 99, 99],
+		[18, 21, 26, 66, 99, 99, 99, 99],
+		[24, 26, 56, 99, 99, 99, 99, 99],
+		[47, 66, 99, 99, 99, 99, 99, 99],
+		[99, 99, 99, 99, 99, 99, 99, 99],
+		[99, 99, 99, 99, 99, 99, 99, 99],
+		[99, 99, 99, 99, 99, 99, 99, 99],
+		[99, 99, 99, 99, 99, 99, 99, 99]
 	],
 	np.uint8
 )
+# 亮度直流量范式哈夫曼编码表
 std_huffman_DC0 = np.array(
-	[0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
-	 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+	[0, 0, 7, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+	 4, 5, 3, 2, 6, 1, 0, 7, 8, 9, 10, 11],
 	np.uint8
 )
+# 色度直流量范式哈夫曼编码表
 std_huffman_DC1 = np.array(
-	[0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,
-	 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+	[0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+	 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 	np.uint8
 )
+# 亮度交流量范式哈夫曼编码表
 std_huffman_AC0 = np.array(
-	[0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0,
-	 1, 125, 1, 2, 3, 0, 4, 17, 5, 18, 33, 49,
-	 65, 6, 19, 81, 97, 7, 34, 113, 20, 50, 129,
-	 145, 161, 8, 35, 66, 177, 193, 21, 82, 209,
-	 240, 36, 51, 98, 114, 130, 9, 10, 22, 23,
-	 24, 25, 26, 37, 38, 39, 40, 41, 42, 52, 53,
-	 54, 55, 56, 57, 58, 67, 68, 69, 70, 71, 72,
-	 73, 74, 83, 84, 85, 86, 87, 88, 89, 90, 99,
-	 100, 101, 102, 103, 104, 105, 106, 115, 116,
-	 117, 118, 119, 120, 121, 122, 131, 132, 133,
-	 134, 135, 136, 137, 138, 146, 147, 148, 149,
-	 150, 151, 152, 153, 154, 162, 163, 164, 165, 
-	 166, 167, 168, 169, 170, 178, 179, 180, 181, 
-	 182, 183, 184, 185, 186, 194, 195, 196, 197, 
-	 198, 199, 200, 201, 202, 210, 211, 212, 213, 
-	 214, 215, 216, 217, 218, 225, 226, 227, 228, 
-	 229, 230, 231, 232, 233, 234, 241, 242, 243, 
-	 244, 245, 246, 247, 248, 249, 250],
+	[0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 125,
+	 0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
+	 0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
+	 0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
+	 0x23, 0x42, 0xb1, 0xc1, 0x15, 0x52, 0xd1, 0xf0,
+	 0x24, 0x33, 0x62, 0x72, 0x82, 0x09, 0x0a, 0x16,
+	 0x17, 0x18, 0x19, 0x1a, 0x25, 0x26, 0x27, 0x28,
+	 0x29, 0x2a, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
+	 0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49,
+	 0x4a, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59,
+	 0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+	 0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79,
+	 0x7a, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89,
+	 0x8a, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98,
+	 0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
+	 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6,
+	 0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3, 0xc4, 0xc5,
+	 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2, 0xd3, 0xd4,
+	 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe1, 0xe2,
+	 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
+	 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
+	 0xf9, 0xfa],
 	np.uint8
 )
+# 色度交流量范式哈夫曼编码表
 std_huffman_AC1 = np.array(
-	[0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1,
-	 2, 119, 0, 1, 2, 3, 17, 4, 5, 33, 49, 6,
-	 18, 65, 81, 7, 97, 113, 19, 34, 50, 129,
-	 8, 20, 66, 145, 161, 177, 193, 9, 35, 51,
-	 82, 240, 21, 98, 114, 209, 10, 22, 36, 52,
-	 225, 37, 241, 23, 24, 25, 26, 38, 39, 40,
-	 41, 42, 53, 54, 55, 56, 57, 58, 67, 68, 69,
-	 70, 71, 72, 73, 74, 83, 84, 85, 86, 87, 88,
-	 89, 90, 99, 100, 101, 102, 103, 104, 105,
-	 106, 115, 116, 117, 118, 119, 120, 121, 122,
-	 130, 131, 132, 133, 134, 135, 136, 137, 138,
-	 146, 147, 148, 149, 150, 151, 152, 153, 154,
-	 162, 163, 164, 165, 166, 167, 168, 169, 170,
-	 178, 179, 180, 181, 182, 183, 184, 185, 186,
-	 194, 195, 196, 197, 198, 199, 200, 201, 202,
-	 210, 211, 212, 213, 214, 215, 216, 217, 218,
-	 226, 227, 228, 229, 230, 231, 232, 233, 234,
-	 242, 243, 244, 245, 246, 247, 248, 249, 250],
+	[0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 119,
+	 0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
+	 0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,
+	 0x13, 0x22, 0x32, 0x81, 0x08, 0x14, 0x42, 0x91,
+	 0xa1, 0xb1, 0xc1, 0x09, 0x23, 0x33, 0x52, 0xf0,
+	 0x15, 0x62, 0x72, 0xd1, 0x0a, 0x16, 0x24, 0x34,
+	 0xe1, 0x25, 0xf1, 0x17, 0x18, 0x19, 0x1a, 0x26,
+	 0x27, 0x28, 0x29, 0x2a, 0x35, 0x36, 0x37, 0x38,
+	 0x39, 0x3a, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48,
+	 0x49, 0x4a, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58,
+	 0x59, 0x5a, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68,
+	 0x69, 0x6a, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78,
+	 0x79, 0x7a, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
+	 0x88, 0x89, 0x8a, 0x92, 0x93, 0x94, 0x95, 0x96,
+	 0x97, 0x98, 0x99, 0x9a, 0xa2, 0xa3, 0xa4, 0xa5,
+	 0xa6, 0xa7, 0xa8, 0xa9, 0xaa, 0xb2, 0xb3, 0xb4,
+	 0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xba, 0xc2, 0xc3,
+	 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xd2,
+	 0xd3, 0xd4, 0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda,
+	 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9,
+	 0xea, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
+	 0xf9, 0xfa],
 	np.uint8
 )
 
+# 记录哈夫曼字典的类
+# symbol: 原始数据
+# code: 对应的编码数据
+# n_bit: 编码的二进制位数
+# str_code: 编码的二进制数据
 class Sym_Code():
 	def __init__(self, symbol, code, n_bit):
 		self.symbol = symbol
@@ -106,22 +125,30 @@ class Sym_Code():
 	def __gt__(self, other):
 		return self.symbol > other.symbol
 
+# 量化
+# block: 当前8*8块的数据
+# dim: 维度  0:Y  1:Cr  2:Cb
 def quantize(block, dim):
 	if(dim == 0):
+		# 使用亮度量化表
 		qarr = std_luminance_quant_tbl
 	else:
+		# 使用色度量化表
 		qarr = std_chrominance_quant_tbl
 	return (block / qarr).round().astype(np.int16)
 
+# zigzag扫描
+# block: 当前8*8块的数据
 def block2zz(block):
 	re = np.empty(64, np.int16)
+	# 当前在block的位置
 	pos = np.array([0, 0])
+	# 定义四个扫描方向
 	R = np.array([0, 1])
 	LD = np.array([1, -1])
 	D = np.array([1, 0])
 	RU = np.array([-1, 1])
 	for i in range(0, 64):
-		# print(i, pos)
 		re[i] = block[pos[0], pos[1]]
 		if(((pos[0] == 0) or (pos[0] == 7)) and (pos[1] % 2 == 0)):
 			pos = pos + R
@@ -133,6 +160,8 @@ def block2zz(block):
 			pos = pos + LD
 	return re
 
+# 0的行程编码
+# AClist: 要编码的交流数据
 def RLE(AClist):
 	re = []
 	cnt = 0
@@ -147,40 +176,41 @@ def RLE(AClist):
 			re.append(cnt)
 			re.append(AClist[i])
 			cnt = 0
+	# 删除末尾的所有[15 0]
 	while(re[-1] == 0):
 		re.pop()
 		re.pop()
 		if(len(re) == 0):
 			break
+	# 在结尾添加两个0作为结束标记
 	re.append(0)
 	re.append(0)
-	if(len(re) > 100):
-		print("Error")
-		exit()
 	return np.array(re, np.int16)
-	# return np.append(np.append(np.array(re, np.int16), np.zeros(63-len(re), np.int16)), np.array(len(re), np.int16))
 
+# 将范式哈夫曼编码表转换为哈夫曼字典
+# data: 定义的范式哈夫曼编码表
 def DHT2tbl(data):
-	numbers = data[0:16]
-	symbols = data[16:len(data)]
-	# print(numbers)
-	# print(symbols)
-	if(sum(numbers) != len(symbols)):
+	numbers = data[0:16]				# 1~16bit长度的编码对应的个数
+	symbols = data[16:len(data)]		# 原数据
+	if(sum(numbers) != len(symbols)):	# 判断是否为正确的范式哈夫曼编码表
 		print("Wrong DHT!")
 		exit()
 	code = 0
-	SC = []
+	SC = []								# 记录字典的列表
 	for n_bit in range(1, 17):
-		n_bit += 1
+		# 按范式哈夫曼编码规则换算出字典
 		for symbol in symbols[sum(numbers[0:n_bit-1]):sum(numbers[0:n_bit])]:
 			SC.append(Sym_Code(symbol, code, n_bit))
 			code += 1
-			# print(SC[-1])
-			# f.write(str(SC[-1]))
 		code <<= 1
 	return sorted(SC)
 
+# 写入jpeg格式的译码信息
+# filename: 输出文件名
+# h: 图片高度
+# w: 图片宽度
 def write_head(filename, h, w):
+	# 二进制写入形式打开文件(覆盖)
 	fp = open(filename, "wb")
 
 	# SOI
@@ -191,23 +221,23 @@ def write_head(filename, h, w):
 	fp.write(pack(">L", 0x4a464946))	# JFIF
 	fp.write(pack(">B", 0))				# 0
 	fp.write(pack(">H", 0x0101))		# 版本号: 1.1
-	fp.write(pack(">B", 0x00))			# XY无密度单位
-	fp.write(pack(">L", 0x00010001))	# XY方向像素密度
+	fp.write(pack(">B", 0x01))			# 像素密度单位: 像素/英寸
+	fp.write(pack(">L", 0x00480048))	# XY方向像素密度
 	fp.write(pack(">H", 0x0000))		# 无缩略图信息
 	# DQT_0
 	fp.write(pack(">H", 0xffdb))
 	fp.write(pack(">H", 64+3))			# 量化表字节数
 	fp.write(pack(">B", 0x00))			# 量化表精度: 8bit(0)  量化表ID: 0
-	for it in std_luminance_quant_tbl:
-		for item in it:
-			fp.write(pack(">B", item))	# 量化表0内容
+	tbl = block2zz(std_luminance_quant_tbl)
+	for item in tbl:
+		fp.write(pack(">B", item))	# 量化表0内容
 	# DQT_1
 	fp.write(pack(">H", 0xffdb))
 	fp.write(pack(">H", 64+3))			# 量化表字节数
 	fp.write(pack(">B", 0x01))			# 量化表精度: 8bit(0)  量化表ID: 1
-	for it in std_chrominance_quant_tbl:
-		for item in it:
-			fp.write(pack(">B", item))	# 量化表0内容
+	tbl = block2zz(std_chrominance_quant_tbl)
+	for item in tbl:
+		fp.write(pack(">B", item))	# 量化表1内容
 	# SOF0
 	fp.write(pack(">H", 0xffc0))
 	fp.write(pack(">H", 17))			# 帧图像信息字节数
@@ -230,20 +260,20 @@ def write_head(filename, h, w):
 	# DHT_AC0
 	fp.write(pack(">H", 0xffc4))
 	fp.write(pack(">H", len(std_huffman_AC0)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x10))						# DC0
+	fp.write(pack(">B", 0x10))						# AC0
 	for item in std_huffman_AC0:
 		fp.write(pack(">B", item))					# 哈夫曼表内容
 	# DHT_DC1
 	fp.write(pack(">H", 0xffc4))
 	fp.write(pack(">H", len(std_huffman_DC1)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x01))						# DC0
+	fp.write(pack(">B", 0x01))						# DC1
 	for item in std_huffman_DC1:
 		fp.write(pack(">B", item))					# 哈夫曼表内容
 	# DHT_AC1
 	fp.write(pack(">H", 0xffc4))
 	fp.write(pack(">H", len(std_huffman_AC1)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x11))						# DC0
-	for item in std_huffman_AC0:
+	fp.write(pack(">B", 0x11))						# AC1
+	for item in std_huffman_AC1:
 		fp.write(pack(">B", item))					# 哈夫曼表内容
 	# SOS
 	fp.write(pack(">H", 0xffda))
@@ -254,6 +284,49 @@ def write_head(filename, h, w):
 	fp.write(pack(">H", 0x0311))		# 颜色分量3 DC、AC使用的哈夫曼表ID
 	fp.write(pack(">B", 0x00))
 	fp.write(pack(">B", 0x3f))
-	fp.write(pack(">B", 0x00))
-
+	fp.write(pack(">B", 0x00))			# 固定值
 	fp.close()
+
+# 特殊的二进制编码格式
+# num: 待编码的数字
+def tobin(num):
+	s = ""
+	if(num > 0):
+		while(num != 0):
+			s += '0' if(num % 2 == 0) else '1'
+			num = int(num / 2)
+		s = s[::-1]
+	elif(num < 0):
+		num = -num
+		while(num != 0):
+			s += '1' if(num % 2 == 0) else '0'
+			num = int(num / 2)
+		s = s[::-1]
+	return s
+
+# 根据编码方式写入数据
+# s: 未写入文件的二进制数据
+# n: 数据前面0的个数(-1代表DC)
+# num: 待写入的数据
+# tbl: 范式哈夫曼编码字典
+def write_num(s, n, num, tbl):
+	bit = 0
+	tnum = num
+	while(tnum != 0):
+		bit += 1
+		tnum = int(tnum / 2)
+	if(n == -1):					# DC
+		tnum = bit
+		if(tnum > 11):
+			print("Write DC data Error")
+			exit()
+	else:							# AC
+		if((n > 15) or (bit > 11) or (((n != 0) and (n != 15)) and (bit == 0))):
+			print("Write AC data Error")
+			exit()
+		tnum = n * 10 + bit + (0 if(n != 15) else 1)
+	# 范式哈夫曼编码记录0的个数(AC)以及num的bit长度
+	s += tbl[tnum].str_code
+	# 特殊形式的数据存储num
+	s += tobin(num)
+	return s
