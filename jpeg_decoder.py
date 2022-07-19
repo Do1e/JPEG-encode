@@ -177,7 +177,7 @@ class JPEG:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("input", help="path to the input file")
+parser.add_argument("-i", "--input", help="path to the input file")
 args = parser.parse_args()
 
 input_jpg = args.input
