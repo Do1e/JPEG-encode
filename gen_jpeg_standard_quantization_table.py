@@ -164,7 +164,7 @@ def gen_quant_table_by_quality(quality=100):
     if len(chrominance_quant_table) != 0:
         chrominance_quant_table_matrix = deZigZag(temp,positions,zigzaged_chrominance_quant_table)
     
-        return luminance_quant_table_matrix,chrominance_quant_table_matrix
+        return luminance_quant_table_matrix.astype(np.uint8), chrominance_quant_table_matrix.astype(np.uint8)
     else:
         return luminance_quant_table_matrix,None
 
