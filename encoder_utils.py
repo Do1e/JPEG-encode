@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 from struct import pack
 
@@ -22,6 +23,50 @@ class Sym_Code():
 		return self.symbol < other.symbol
 	def __gt__(self, other):
 		return self.symbol > other.symbol
+# 比特缓存，每8位保存到列表中
+class Byte_Buffer():
+	def __init__(self) -> None:
+		self.buffer = []
+		self.temp = ""
+	def size(self) -> int:
+		return len(self.buffer)
+	def append_bit(self, data: int) -> None:
+		if data != 0 and data != 1:
+			raise ValueError("data must be 0 or 1")
+		self.temp += str(data)
+		if len(self.temp) == 8:
+			self.buffer.append(int(self.temp, 2))
+			self.temp = ""
+	def append_byte(self, data: int) -> None:
+		if data < 0 or data > 255:
+			raise ValueError("data must be 0 ~ 255")
+		if len(self.temp) == 0:
+			self.buffer.append(data)
+		else:
+			lenTemp = len(self.temp)
+			self.temp += bin(data >> lenTemp)[2:]
+			data &= (1 << lenTemp) - 1
+			self.buffer.append(int(self.temp, 2))
+			self.temp = bin(data)[2:].zfill(lenTemp)
+	def append_buffer(self, data: Byte_Buffer) -> None:
+		if len(self.temp) == 0:
+			self.buffer.extend(data.buffer)
+			self.temp = data.temp
+		else:
+			lenTemp = len(self.temp)
+			self.temp += bin(data.buffer[0] >> lenTemp)[2:]
+			self.buffer.append(int(self.temp, 2))
+			for i in range(0, data.size() - 1):
+				data.buffer[i] = (data.buffer[i] & ((1 << lenTemp) - 1)) << (8 - lenTemp)
+				data.buffer[i] |= data.buffer[i + 1] >> lenTemp
+				self.buffer.append(data.buffer[i])
+			data.buffer[-1] &= ((1 << lenTemp) - 1)
+			self.temp = (bin(data.buffer[-1])[2:] + data.temp).zfill(lenTemp + len(data.temp))
+			if len(self.temp) >= 8:
+				self.buffer.append(int(self.temp[:8], 2))
+				self.temp = self.temp[8:]
+	def __str__(self) -> str:
+		return str(self.buffer) + " " + self.temp
 
 # zigzag扫描
 # block: 当前8*8块的数据
