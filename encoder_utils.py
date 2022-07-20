@@ -32,7 +32,7 @@ class Byte_Buffer():
 	def size(self) -> int:
 		return len(self.buffer)
 	def append_bit(self, data: int) -> None:
-		if not data:
+		if data is None:
 			return
 		if data != 0 and data != 1:
 			raise ValueError("data must be 0 or 1")
@@ -41,7 +41,7 @@ class Byte_Buffer():
 			self.buffer.append(int(self.temp, 2))
 			self.temp = ""
 	def append_byte(self, data: int) -> None:
-		if not data:
+		if data is None:
 			return
 		if data < 0 or data > 255:
 			raise ValueError("data must be 0 ~ 255")
@@ -54,7 +54,7 @@ class Byte_Buffer():
 			self.buffer.append(int(self.temp, 2))
 			self.temp = (bin(data)[2:]).zfill(lenTemp)
 	def append_str(self, data: str) -> None:
-		if not data:
+		if data is None:
 			return
 		lenByte = len(data) // 8
 		for i in range(lenByte):
@@ -67,7 +67,7 @@ class Byte_Buffer():
 			else:
 				raise ValueError("data must be 0 or 1")
 	def append_buffer(self, data: Byte_Buffer) -> None:
-		if not data:
+		if data is None:
 			return
 		if len(self.temp) == 0:
 			self.buffer.extend(data.buffer)
