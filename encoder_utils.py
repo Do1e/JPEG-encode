@@ -263,6 +263,8 @@ def tobin(num: int) -> Byte_Buffer:
 def write_num(n: int, num: int, tbl: list) -> None:
 	res = Byte_Buffer()
 	bit = len(bin(num)[2:])
+	if num <= 0:
+		bit -= 1
 	# 如果是DC编码
 	if n == -1:
 		if bit > 11:
