@@ -32,6 +32,8 @@ class Byte_Buffer():
 	def size(self) -> int:
 		return len(self.buffer)
 	def append_bit(self, data: int) -> None:
+		if not data:
+			return
 		if data != 0 and data != 1:
 			raise ValueError("data must be 0 or 1")
 		self.temp += str(data)
@@ -39,6 +41,8 @@ class Byte_Buffer():
 			self.buffer.append(int(self.temp, 2))
 			self.temp = ""
 	def append_byte(self, data: int) -> None:
+		if not data:
+			return
 		if data < 0 or data > 255:
 			raise ValueError("data must be 0 ~ 255")
 		if len(self.temp) == 0:
@@ -50,6 +54,8 @@ class Byte_Buffer():
 			self.buffer.append(int(self.temp, 2))
 			self.temp = (bin(data)[2:]).zfill(lenTemp)
 	def append_str(self, data: str) -> None:
+		if not data:
+			return
 		lenByte = len(data) // 8
 		for i in range(lenByte):
 			self.append_byte(int(data[i * 8 : (i + 1) * 8], 2))
@@ -61,10 +67,18 @@ class Byte_Buffer():
 			else:
 				raise ValueError("data must be 0 or 1")
 	def append_buffer(self, data: Byte_Buffer) -> None:
+		if not data:
+			return
 		if len(self.temp) == 0:
 			self.buffer.extend(data.buffer)
 			self.temp = data.temp
 		else:
+			if data.size() == 0:
+				self.temp += data.temp
+				if len(self.temp) >= 8:
+					self.buffer.append(int(self.temp[:8], 2))
+					self.temp = self.temp[8:]
+				return
 			lenTemp = len(self.temp)
 			self.temp += (bin(data.buffer[0] >> lenTemp)[2:]).zfill(8 - lenTemp)
 			self.buffer.append(int(self.temp, 2))
@@ -77,6 +91,10 @@ class Byte_Buffer():
 			if len(self.temp) >= 8:
 				self.buffer.append(int(self.temp[:8], 2))
 				self.temp = self.temp[8:]
+	def flush(self, fp: open) -> None:
+		for item in self.buffer:
+			fp.write(pack('>B', item))
+		self.buffer = []
 	def __str__(self) -> str:
 		return str(self.buffer) + " " + self.temp
 
@@ -229,7 +247,7 @@ def RLE(AClist: np.ndarray) -> np.ndarray:
 def tobin(num: int) -> Byte_Buffer:
 	res = Byte_Buffer()
 	if num == 0:
-		raise ValueError("num can't be 0")
+		return None
 	elif num > 0:
 		res.append_str(bin(num)[2:])
 	else:
