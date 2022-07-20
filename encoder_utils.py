@@ -137,8 +137,8 @@ def write_head(filename: str, h: int, w: int) -> None:
 	fp.write(pack(">L", 0x4a464946))	# JFIF
 	fp.write(pack(">B", 0))				# 0
 	fp.write(pack(">H", 0x0101))		# 版本号: 1.1
-	fp.write(pack(">B", 0x01))			# 像素密度单位: 像素/英寸
-	fp.write(pack(">L", 0x00480048))	# XY方向像素密度
+	fp.write(pack(">B", 0x00))			# 像素密度单位: 像素/英寸
+	fp.write(pack(">L", 0x00010001))	# XY方向像素密度
 	fp.write(pack(">H", 0x0000))		# 无缩略图信息
 	# DQT_0
 	fp.write(pack(">H", 0xffdb))

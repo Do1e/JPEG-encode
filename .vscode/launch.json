@@ -11,7 +11,7 @@
 			"program": "encoder.py",
 			"console": "integratedTerminal",
 			"justMyCode": true,
-			"args": ["-i", "tstsimg.bmp", "-o", "./test/tstsimg.jpg"]
+			"args": ["-i", "tstimg.bmp", "-o", "./test/tstimg.jpg"]
 		},
 		{
 			"name": "REFencoder",

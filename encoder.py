@@ -12,6 +12,7 @@ parser.add_argument('-o', '--output', help='output file', required=True)
 args = parser.parse_args()
 
 BGR = cv2.imread(args.input)
+cv2.imwrite('./test/ref.jpg', BGR, [cv2.IMWRITE_JPEG_QUALITY, 100, cv2.IMWRITE_JPEG_PROGRESSIVE, 1])
 # 色彩空间变换
 YCrCb = cv2.cvtColor(BGR, cv2.COLOR_BGR2YCrCb)
 h, w, d = YCrCb.shape
