@@ -23,6 +23,7 @@ class Sym_Code():
 		return self.symbol < other.symbol
 	def __gt__(self, other):
 		return self.symbol > other.symbol
+
 # 比特缓存，每8位保存到列表中
 class Byte_Buffer():
 	def __init__(self) -> None:
@@ -44,17 +45,28 @@ class Byte_Buffer():
 			self.buffer.append(data)
 		else:
 			lenTemp = len(self.temp)
-			self.temp += bin(data >> lenTemp)[2:]
+			self.temp += (bin(data >> lenTemp)[2:]).zfill(8 - lenTemp)
 			data &= (1 << lenTemp) - 1
 			self.buffer.append(int(self.temp, 2))
-			self.temp = bin(data)[2:].zfill(lenTemp)
+			self.temp = (bin(data)[2:]).zfill(lenTemp)
+	def append_str(self, data: str) -> None:
+		lenByte = len(data) // 8
+		for i in range(lenByte):
+			self.append_byte(int(data[i * 8 : (i + 1) * 8], 2))
+		for i in range(8 * lenByte, len(data)):
+			if data[i] == '0':
+				self.append_bit(0)
+			elif data[i] == '1':
+				self.append_bit(1)
+			else:
+				raise ValueError("data must be 0 or 1")
 	def append_buffer(self, data: Byte_Buffer) -> None:
 		if len(self.temp) == 0:
 			self.buffer.extend(data.buffer)
 			self.temp = data.temp
 		else:
 			lenTemp = len(self.temp)
-			self.temp += bin(data.buffer[0] >> lenTemp)[2:]
+			self.temp += (bin(data.buffer[0] >> lenTemp)[2:]).zfill(8 - lenTemp)
 			self.buffer.append(int(self.temp, 2))
 			for i in range(0, data.size() - 1):
 				data.buffer[i] = (data.buffer[i] & ((1 << lenTemp) - 1)) << (8 - lenTemp)
