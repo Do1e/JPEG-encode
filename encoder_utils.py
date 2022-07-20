@@ -12,10 +12,10 @@ class Sym_Code():
 	def __init__(self, symbol: int, code: int, n_bit: int) -> None:
 		self.symbol = symbol
 		self.code = code
-		self.n_bit = n_bit
+		self.str_code = bin(code)[2:].zfill(n_bit)
 	"""定义输出形式"""
 	def __str__(self):
-		return "0x{:0>2x}    |  {}".format(self.symbol, str(self.code))
+		return "0x{:0>2x}    |  {}".format(self.symbol, self.str_code)
 	"""定义排序依据"""
 	def __eq__(self, other):
 		return self.symbol == other.symbol
@@ -223,3 +223,56 @@ def RLE(AClist: np.ndarray) -> np.ndarray:
 	re.append(0)
 	re.append(0)
 	return np.array(re, np.int16)
+
+# 特殊的二进制编码格式
+# num: 待编码的数字
+def tobin(num: int) -> Byte_Buffer:
+	res = Byte_Buffer()
+	if num == 0:
+		raise ValueError("num can't be 0")
+	elif num > 0:
+		res.append_str(bin(num)[2:])
+	else:
+		lenStr = len(bin(-num)[2:])
+		num = (1 << lenStr) - 1 + num
+		res.append_str(bin(num)[2:].zfill(lenStr))
+	return res
+
+# 根据编码方式写入数据
+# n: 数据前面0的个数(-1代表DC)
+# num: 待写入的数据
+# tbl: 范式哈夫曼编码字典
+def write_num(n: int, num: int, tbl: list) -> None:
+	res = Byte_Buffer()
+	bit = len(bin(num)[2:])
+	# 如果是DC编码
+	if n == -1:
+		if bit > 11:
+			raise ValueError("DC编码长度数值超出范围")
+		tnum = bit
+	# 如果是AC编码
+	else:
+		if (n > 15) or (bit > 11) or (((n != 0) and (n != 15)) and (bit == 0)):
+			raise ValueError("AC编码长度数值超出范围")
+		tnum = n * 10 + bit + (0 if(n != 15) else 1)
+	res.append_str(tbl[tnum].str_code)
+	res.append_buffer(tobin(num))
+	return res
+
+# 将范式哈夫曼编码表转换为哈夫曼字典
+# data: 定义的范式哈夫曼编码表
+def DHT2tbl(data):
+	numbers = data[0:16]				# 1~16bit长度的编码对应的个数
+	symbols = data[16:len(data)]		# 原数据
+	if(sum(numbers) != len(symbols)):	# 判断是否为正确的范式哈夫曼编码表
+		print("Wrong DHT!")
+		exit()
+	code = 0
+	SC = []								# 记录字典的列表
+	for n_bit in range(1, 17):
+		# 按范式哈夫曼编码规则换算出字典
+		for symbol in symbols[sum(numbers[0:n_bit-1]):sum(numbers[0:n_bit])]:
+			SC.append(Sym_Code(symbol, code, n_bit))
+			code += 1
+		code <<= 1
+	return sorted(SC)
