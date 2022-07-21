@@ -101,7 +101,7 @@ class Byte_Buffer():
 # zigzag扫描
 # block: 当前8*8块的数据
 def block2zz(block: np.ndarray) -> np.ndarray:
-	re = np.empty(64, np.int16)
+	re = np.empty(64, block.dtype)
 	# 当前在block的位置
 	pos = np.array([0, 0])
 	# 定义四个扫描方向
@@ -267,12 +267,13 @@ def write_num(n: int, num: int, tbl: list) -> None:
 		bit -= 1
 	# 如果是DC编码
 	if n == -1:
-		if bit > 11:
+		if bit > 11 or bit < 0:
 			raise ValueError("DC编码长度数值超出范围")
 		tnum = bit
 	# 如果是AC编码
 	else:
-		if (n > 15) or (bit > 11) or (((n != 0) and (n != 15)) and (bit == 0)):
+		if (n > 15) or (n < 0) or (bit < 0) or (bit > 11) \
+			or (((n != 0) and (n != 15)) and (bit == 0)):
 			raise ValueError("AC编码长度数值超出范围")
 		tnum = n * 10 + bit + (0 if(n != 15) else 1)
 	res.append_str(tbl[tnum].str_code)
