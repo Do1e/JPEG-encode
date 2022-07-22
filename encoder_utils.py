@@ -94,6 +94,8 @@ class Byte_Buffer():
 	def flush(self, fp: open) -> None:
 		for item in self.buffer:
 			fp.write(pack('>B', item))
+			if item == 255:
+				fp.write(pack('>B', 0))
 		self.buffer = []
 	def __str__(self) -> str:
 		return str(self.buffer) + " " + self.temp
