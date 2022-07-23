@@ -184,8 +184,8 @@ def RLE(AClist):
 		if(len(re) == 0):
 			break
 	# 在结尾添加两个0作为结束标记
-	re.append(0)
-	re.append(0)
+	if(AClist[-1] == 0):
+		re.extend([0, 0])
 	return np.array(re, np.int16)
 
 # 将范式哈夫曼编码表转换为哈夫曼字典
