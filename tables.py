@@ -5,8 +5,8 @@ from gen_jpeg_standard_quantization_table import gen_quant_table_by_quality
 std_luminance_quant_tbl, std_chrominance_quant_tbl = gen_quant_table_by_quality(100)
 # 亮度直流量范式哈夫曼编码表
 std_huffman_DC0 = np.array(
-	[0, 0, 7, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-	 4, 5, 3, 2, 6, 1, 0, 7, 8, 9, 10, 11],
+	[0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+	 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 	np.uint8
 )
 # 色度直流量范式哈夫曼编码表
