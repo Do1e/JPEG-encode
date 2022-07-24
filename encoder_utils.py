@@ -98,7 +98,7 @@ class Byte_Buffer():
 				fp.write(pack('>B', 0))
 		self.buffer = []
 	def __str__(self) -> str:
-		return str(self.buffer) + " " + self.temp
+		return str([hex(item) for item in self.buffer]) + " " + self.temp
 
 # zigzag扫描
 # block: 当前8*8块的数据
