@@ -2,7 +2,11 @@ import numpy as np
 from gen_jpeg_standard_quantization_table import gen_quant_table_by_quality
 
 # 亮度量化表和色度量化表
-std_luminance_quant_tbl, std_chrominance_quant_tbl = gen_quant_table_by_quality(100)
+global std_luminance_quant_tbl, std_chrominance_quant_tbl
+std_luminance_quant_tbl, std_chrominance_quant_tbl = gen_quant_table_by_quality(95)
+def gen_quant_table(quality: int) -> None:
+	global std_luminance_quant_tbl, std_chrominance_quant_tbl
+	std_luminance_quant_tbl, std_chrominance_quant_tbl = gen_quant_table_by_quality(quality)
 # 亮度直流量范式哈夫曼编码表
 std_huffman_DC0 = np.array(
 	[0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,

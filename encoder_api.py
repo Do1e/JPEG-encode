@@ -5,7 +5,8 @@ import argparse
 import tables
 import encoder_utils
 
-def JPEG_encoder(img: np.ndarray, show=False) -> np.ndarray:
+def JPEG_encoder(img: np.ndarray, quality=95, show=False) -> np.ndarray:
+	tables.gen_quant_table(quality)
 	resList = []
 	YCrCb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
 	h, w, d = YCrCb.shape
