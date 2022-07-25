@@ -223,11 +223,7 @@ def RLE(AClist: np.ndarray) -> np.ndarray:
 	re = []
 	cnt = 0
 	for i in range(0, 63):
-		if(cnt == 15):
-			re.append(cnt)
-			re.append(AClist[i])
-			cnt = 0
-		elif(AClist[i] == 0):
+		if(AClist[i] == 0 and cnt != 15):
 			cnt += 1
 		else:
 			re.append(cnt)
