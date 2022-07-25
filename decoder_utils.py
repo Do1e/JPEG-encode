@@ -128,5 +128,6 @@ def decode_head(data: np.ndarray) -> int:
 def load_buffer(data:np.ndarray ,buffer: str, nowIdx: int) -> list:
 	loadLen = min(data.shape[0] - nowIdx, 8)
 	for i in range(nowIdx, nowIdx + loadLen):
-		buffer += bin(data[i])[2:].zfill(8)
+		if data[i] != 0 or data[i-1] != 0xff:
+			buffer += bin(data[i])[2:].zfill(8)
 	return nowIdx + loadLen, buffer
