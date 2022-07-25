@@ -31,15 +31,16 @@ del BGR
 del YCrCb
 
 # 写入jpeg格式的译码信息
-encoder_utils.write_head(args.output, h, w)
+fp = open(args.output, 'wb')
+buffer = encoder_utils.Byte_Buffer()
+buffer.append_buffer(encoder_utils.write_head(h, w))
+buffer.flush(fp, header=True)
 # 换算出哈夫曼字典
 DC0 = encoder_utils.DHT2tbl(tables.std_huffman_DC0)
 DC1 = encoder_utils.DHT2tbl(tables.std_huffman_DC1)
 AC0 = encoder_utils.DHT2tbl(tables.std_huffman_AC0)
 AC1 = encoder_utils.DHT2tbl(tables.std_huffman_AC1)
 
-buffer = encoder_utils.Byte_Buffer()
-fp = open(args.output, 'ab')
 last_block_ydc = 0
 last_block_cbdc = 0
 last_block_crdc = 0

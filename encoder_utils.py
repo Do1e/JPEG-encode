@@ -31,6 +31,10 @@ class Byte_Buffer():
 		self.temp = ""
 	def size(self) -> int:
 		return len(self.buffer)
+	def tolist(self) -> list:
+		return self.buffer
+	def tonumpy(self) -> np.ndarray:
+		return np.array(self.buffer)
 	def append_bit(self, data: int) -> None:
 		if data is None:
 			return
@@ -91,11 +95,17 @@ class Byte_Buffer():
 			if len(self.temp) >= 8:
 				self.buffer.append(int(self.temp[:8], 2))
 				self.temp = self.temp[8:]
-	def flush(self, fp: open) -> None:
+	def flush(self, fp: open, header=False) -> None:
 		for item in self.buffer:
 			fp.write(pack('>B', item))
-			if item == 255:
+			if item == 255 and not header:
 				fp.write(pack('>B', 0))
+		self.buffer = []
+	def flush_api(self, List: list, header=False) -> None:
+		for item in self.buffer:
+			List.append(item)
+			if item == 255 and not header:
+				List.append(0)
 		self.buffer = []
 	def __str__(self) -> str:
 		return str([hex(item) for item in self.buffer]) + " " + self.temp
@@ -127,83 +137,79 @@ def block2zz(block: np.ndarray) -> np.ndarray:
 # filename: 输出文件名
 # h: 图片高度
 # w: 图片宽度
-def write_head(filename: str, h: int, w: int) -> None:
-	# 二进制写入形式打开文件(覆盖)
-	fp = open(filename, "wb")
-
+def write_head(h: int, w: int) -> Byte_Buffer:
+	res = Byte_Buffer()
 	# SOI
-	fp.write(pack(">H", 0xffd8))
+	res.append_str(bin(0xffd8)[2:].zfill(16))
 	# APP0
-	fp.write(pack(">H", 0xffe0))
-	fp.write(pack(">H", 16))			# APP0字节数
-	fp.write(pack(">L", 0x4a464946))	# JFIF
-	fp.write(pack(">B", 0))				# 0
-	fp.write(pack(">H", 0x0101))		# 版本号: 1.1
-	fp.write(pack(">B", 0x00))			# 像素密度单位: 像素/英寸
-	fp.write(pack(">L", 0x00010001))	# XY方向像素密度
-	fp.write(pack(">H", 0x0000))		# 无缩略图信息
+	res.append_str(bin(0xffe0)[2:].zfill(16))
+	res.append_str(bin(16)[2:].zfill(16))			# APP0字节数
+	res.append_str(bin(0x4a464946)[2:].zfill(32))	# JFIF
+	res.append_byte(0)								# 0
+	res.append_str(bin(0x0101)[2:].zfill(16))		# 版本号: 1.1
+	res.append_byte(0)								# 像素密度单位: 像素/英寸
+	res.append_str(bin(0x00010001)[2:].zfill(32))	# XY方向像素密度
+	res.append_str(bin(0x0000)[2:].zfill(16))		# 无缩略图信息
 	# DQT_0
-	fp.write(pack(">H", 0xffdb))
-	fp.write(pack(">H", 64+3))			# 量化表字节数
-	fp.write(pack(">B", 0x00))			# 量化表精度: 8bit(0)  量化表ID: 0
+	res.append_str(bin(0xffdb)[2:].zfill(16))
+	res.append_str(bin(64+3)[2:].zfill(16))			# 量化表字节数
+	res.append_byte(0x00)							# 量化表精度: 8bit(0)  量化表ID: 0
 	tbl = block2zz(tables.std_luminance_quant_tbl)
 	for item in tbl:
-		fp.write(pack(">B", item))		# 量化表0内容
+		res.append_byte(item)						# 量化表0内容
 	# DQT_1
-	fp.write(pack(">H", 0xffdb))
-	fp.write(pack(">H", 64+3))			# 量化表字节数
-	fp.write(pack(">B", 0x01))			# 量化表精度: 8bit(0)  量化表ID: 1
+	res.append_str(bin(0xffdb)[2:].zfill(16))
+	res.append_str(bin(64+3)[2:].zfill(16))			# 量化表字节数
+	res.append_byte(0x01)							# 量化表精度: 8bit(0)  量化表ID: 1
 	tbl = block2zz(tables.std_chrominance_quant_tbl)
 	for item in tbl:
-		fp.write(pack(">B", item))		# 量化表1内容
+		res.append_byte(item)						# 量化表1内容
 	# SOF0
-	fp.write(pack(">H", 0xffc0))
-	fp.write(pack(">H", 17))			# 帧图像信息字节数
-	fp.write(pack(">B", 8))				# 精度: 8bit
-	fp.write(pack(">H", h))				# 图像高度
-	fp.write(pack(">H", w))				# 图像宽度
-	fp.write(pack(">B", 3))				# 颜色分量数: 3(YCrCb)
-	fp.write(pack(">B", 1))				# 颜色分量ID: 1
-	fp.write(pack(">H", 0x1100))		# 水平垂直采样因子: 1  使用的量化表ID: 0
-	fp.write(pack(">B", 2))				# 颜色分量ID: 2
-	fp.write(pack(">H", 0x1101))		# 水平垂直采样因子: 1  使用的量化表ID: 1
-	fp.write(pack(">B", 3))				# 颜色分量ID: 3
-	fp.write(pack(">H", 0x1101))		# 水平垂直采样因子: 1  使用的量化表ID: 1
+	res.append_str(bin(0xffc0)[2:].zfill(16))
+	res.append_str(bin(17)[2:].zfill(16))		# 帧图像信息字节数
+	res.append_byte(8)							# 精度: 8bit
+	res.append_str(bin(h)[2:].zfill(16))		# 图像高度
+	res.append_str(bin(w)[2:].zfill(16))		# 图像宽度
+	res.append_byte(3)							# 颜色分量数: 3(YCrCb)
+	res.append_byte(1)							# 颜色分量ID: 1
+	res.append_str(bin(0x1100)[2:].zfill(16))	# 水平垂直采样因子: 1  使用的量化表ID: 0
+	res.append_byte(2)							# 颜色分量ID: 2
+	res.append_str(bin(0x1101)[2:].zfill(16))	# 水平垂直采样因子: 1  使用的量化表ID: 1
+	res.append_byte(3)							# 颜色分量ID: 3
+	res.append_str(bin(0x1101)[2:].zfill(16))	# 水平垂直采样因子: 1  使用的量化表ID: 1
 	# DHT_DC0
-	fp.write(pack(">H", 0xffc4))
-	fp.write(pack(">H", len(tables.std_huffman_DC0)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x00))							# DC0
+	res.append_str(bin(0xffc4)[2:].zfill(16))
+	res.append_str(bin(len(tables.std_huffman_DC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
+	res.append_byte(0x00)												# DC0
 	for item in tables.std_huffman_DC0:
-		fp.write(pack(">B", item))						# 哈夫曼表内容
+		res.append_byte(item)											# 哈夫曼表内容
 	# DHT_AC0
-	fp.write(pack(">H", 0xffc4))
-	fp.write(pack(">H", len(tables.std_huffman_AC0)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x10))							# AC0
+	res.append_str(bin(0xffc4)[2:].zfill(16))
+	res.append_str(bin(len(tables.std_huffman_AC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
+	res.append_byte(0x10)												# AC0
 	for item in tables.std_huffman_AC0:
-		fp.write(pack(">B", item))						# 哈夫曼表内容
+		res.append_byte(item)											# 哈夫曼表内容
 	# DHT_DC1
-	fp.write(pack(">H", 0xffc4))
-	fp.write(pack(">H", len(tables.std_huffman_DC1)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x01))							# DC1
+	res.append_str(bin(0xffc4)[2:].zfill(16))
+	res.append_str(bin(len(tables.std_huffman_DC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
+	res.append_byte(0x01)												# DC1
 	for item in tables.std_huffman_DC1:
-		fp.write(pack(">B", item))						# 哈夫曼表内容
+		res.append_byte(item)											# 哈夫曼表内容
 	# DHT_AC1
-	fp.write(pack(">H", 0xffc4))
-	fp.write(pack(">H", len(tables.std_huffman_AC1)+3))	# 哈夫曼表字节数
-	fp.write(pack(">B", 0x11))							# AC1
+	res.append_str(bin(0xffc4)[2:].zfill(16))
+	res.append_str(bin(len(tables.std_huffman_AC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
+	res.append_byte(0x11)												# AC1
 	for item in tables.std_huffman_AC1:
-		fp.write(pack(">B", item))						# 哈夫曼表内容
+		res.append_byte(item)											# 哈夫曼表内容
 	# SOS
-	fp.write(pack(">H", 0xffda))
-	fp.write(pack(">H", 12))			# 扫描开始信息字节数
-	fp.write(pack(">B", 3))				# 颜色分量数: 3
-	fp.write(pack(">H", 0x0100))		# 颜色分量1 DC、AC使用的哈夫曼表ID
-	fp.write(pack(">H", 0x0211))		# 颜色分量2 DC、AC使用的哈夫曼表ID
-	fp.write(pack(">H", 0x0311))		# 颜色分量3 DC、AC使用的哈夫曼表ID
-	fp.write(pack(">B", 0x00))			# 固定值
-	fp.write(pack(">B", 0x3f))
-	fp.write(pack(">B", 0x00))
-	fp.close()
+	res.append_str(bin(0xffda)[2:].zfill(16))
+	res.append_str(bin(12)[2:].zfill(16))		# 扫描开始信息字节数
+	res.append_byte(3)							# 颜色分量数: 3
+	res.append_str(bin(0x0100)[2:].zfill(16))	# 颜色分量1 DC、AC使用的哈夫曼表ID
+	res.append_str(bin(0x0211)[2:].zfill(16))	# 颜色分量2 DC、AC使用的哈夫曼表ID
+	res.append_str(bin(0x0311)[2:].zfill(16))	# 颜色分量3 DC、AC使用的哈夫曼表ID
+	res.append_str(bin(0x003f00)[2:].zfill(24))	# 固定值
+	return res
 
 # 量化
 # block: 当前8*8块的数据
