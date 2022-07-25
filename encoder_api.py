@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
-import argparse
 
 import tables
 import encoder_utils
+import common_utils
 
 def JPEG_encoder(img: np.ndarray, quality=95, show=False) -> np.ndarray:
 	tables.gen_quant_table(quality)
@@ -21,10 +21,10 @@ def JPEG_encoder(img: np.ndarray, quality=95, show=False) -> np.ndarray:
 	buffer = encoder_utils.Byte_Buffer()
 	buffer.append_buffer(encoder_utils.write_head(h, w))
 	buffer.flush_api(resList, header=True)
-	DC0 = encoder_utils.DHT2tbl(tables.std_huffman_DC0)
-	DC1 = encoder_utils.DHT2tbl(tables.std_huffman_DC1)
-	AC0 = encoder_utils.DHT2tbl(tables.std_huffman_AC0)
-	AC1 = encoder_utils.DHT2tbl(tables.std_huffman_AC1)
+	DC0 = common_utils.DHT2tbl(tables.std_huffman_DC0)
+	DC1 = common_utils.DHT2tbl(tables.std_huffman_DC1)
+	AC0 = common_utils.DHT2tbl(tables.std_huffman_AC0)
+	AC1 = common_utils.DHT2tbl(tables.std_huffman_AC1)
 	last_block_ydc = 0
 	last_block_cbdc = 0
 	last_block_crdc = 0
