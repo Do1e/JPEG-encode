@@ -11,15 +11,16 @@
 			"program": "encoder.py",
 			"console": "integratedTerminal",
 			"justMyCode": true,
-			"args": ["-i", "./testimg/tstlimg.bmp", "-o", "./output/tstlimg.jpg"]
+			"args": ["-i", "./testimg/tst.bmp", "-o", "./output/tst.jpg"]
 		},
 		{
-			"name": "REFencoder",
+			"name": "Decoder",
 			"type": "python",
 			"request": "launch",
-			"program": "jpeg.py",
+			"program": "decoder.py",
 			"console": "integratedTerminal",
-			"justMyCode": true
+			"justMyCode": true,
+			"args": ["-i", "./output/tst.jpg", "-o", "./tst.bmp"]
 		}
 	]
 }
