@@ -30,6 +30,15 @@
 			"console": "integratedTerminal",
 			"justMyCode": true,
 			"args": ["-i", "./output/tst.jpg", "-o", "./tst.bmp"]
+		},
+		{
+			"name": "DecoderAPI",
+			"type": "python",
+			"request": "launch",
+			"program": "decoder_api_test.py",
+			"console": "integratedTerminal",
+			"justMyCode": true,
+			"args": ["-i", "./output/tstimg.jpg"]
 		}
 	]
 }
