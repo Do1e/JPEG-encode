@@ -19,8 +19,8 @@ for id in range(1, 6):
 	fpsnr = open('./test/' + str(id) + '_psnr.txt', 'w')
 	fsize = open('./test/' + str(id) + '_size.txt', 'w')
 
-	# quat = 100
-	for quat in range(5, 101, 5):
+	quat = 5
+	while quat <= 100:
 		img = Image.open('./test/testimg/' + str(id) + '.png')
 		img = img.convert('RGB')
 		img.save('./test/' + str(id) + '.jpg', quality=quat, subsampling=0)
@@ -39,6 +39,10 @@ for id in range(1, 6):
 		fpsnr.write(f'{quat:3}    {psnr_ref:5.2f}    {psnr_my:5.2f}\n')
 		fsize.write(f'{quat:3}    {size_ref}    {size_my}\n')
 		os.remove('./test/' + str(id) + '.jpg')
+		if quat < 90:
+			quat += 5
+		else:
+			quat += 1
 
 	fpsnr.close()
 	fsize.close()
