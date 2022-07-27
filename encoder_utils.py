@@ -118,7 +118,7 @@ def block2zz(block: np.ndarray) -> np.ndarray:
 # filename: 输出文件名
 # h: 图片高度
 # w: 图片宽度
-def write_head(h: int, w: int) -> Byte_Buffer:
+def write_head(h: int, w: int, gray=False) -> Byte_Buffer:
 	res = Byte_Buffer()
 	# SOI
 	res.append_str(bin(0xffd8)[2:].zfill(16))
@@ -138,26 +138,28 @@ def write_head(h: int, w: int) -> Byte_Buffer:
 	tbl = block2zz(tables.std_luminance_quant_tbl)
 	for item in tbl:
 		res.append_byte(item)						# 量化表0内容
-	# DQT_1
-	res.append_str(bin(0xffdb)[2:].zfill(16))
-	res.append_str(bin(64+3)[2:].zfill(16))			# 量化表字节数
-	res.append_byte(0x01)							# 量化表精度: 8bit(0)  量化表ID: 1
-	tbl = block2zz(tables.std_chrominance_quant_tbl)
-	for item in tbl:
-		res.append_byte(item)						# 量化表1内容
+	if not gray:
+		# DQT_1
+		res.append_str(bin(0xffdb)[2:].zfill(16))
+		res.append_str(bin(64+3)[2:].zfill(16))			# 量化表字节数
+		res.append_byte(0x01)							# 量化表精度: 8bit(0)  量化表ID: 1
+		tbl = block2zz(tables.std_chrominance_quant_tbl)
+		for item in tbl:
+			res.append_byte(item)						# 量化表1内容
 	# SOF0
 	res.append_str(bin(0xffc0)[2:].zfill(16))
-	res.append_str(bin(17)[2:].zfill(16))		# 帧图像信息字节数
-	res.append_byte(8)							# 精度: 8bit
-	res.append_str(bin(h)[2:].zfill(16))		# 图像高度
-	res.append_str(bin(w)[2:].zfill(16))		# 图像宽度
-	res.append_byte(3)							# 颜色分量数: 3(YCrCb)
-	res.append_byte(1)							# 颜色分量ID: 1
-	res.append_str(bin(0x1100)[2:].zfill(16))	# 水平垂直采样因子: 1  使用的量化表ID: 0
-	res.append_byte(2)							# 颜色分量ID: 2
-	res.append_str(bin(0x1101)[2:].zfill(16))	# 水平垂直采样因子: 1  使用的量化表ID: 1
-	res.append_byte(3)							# 颜色分量ID: 3
-	res.append_str(bin(0x1101)[2:].zfill(16))	# 水平垂直采样因子: 1  使用的量化表ID: 1
+	res.append_str(bin(11 if gray else 17)[2:].zfill(16))	# 帧图像信息字节数
+	res.append_byte(8)										# 精度: 8bit
+	res.append_str(bin(h)[2:].zfill(16))					# 图像高度
+	res.append_str(bin(w)[2:].zfill(16))					# 图像宽度
+	res.append_byte(1 if gray else 3)						# 颜色分量数: 3(YCrCb)
+	res.append_byte(1)										# 颜色分量ID: 1
+	res.append_str(bin(0x1100)[2:].zfill(16))				# 水平垂直采样因子: 1  使用的量化表ID: 0
+	if not gray:
+		res.append_byte(2)									# 颜色分量ID: 2
+		res.append_str(bin(0x1101)[2:].zfill(16))			# 水平垂直采样因子: 1  使用的量化表ID: 1
+		res.append_byte(3)									# 颜色分量ID: 3
+		res.append_str(bin(0x1101)[2:].zfill(16))			# 水平垂直采样因子: 1  使用的量化表ID: 1
 	# DHT_DC0
 	res.append_str(bin(0xffc4)[2:].zfill(16))
 	res.append_str(bin(len(tables.std_huffman_DC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
@@ -170,26 +172,28 @@ def write_head(h: int, w: int) -> Byte_Buffer:
 	res.append_byte(0x10)												# AC0
 	for item in tables.std_huffman_AC0:
 		res.append_byte(item)											# 哈夫曼表内容
-	# DHT_DC1
-	res.append_str(bin(0xffc4)[2:].zfill(16))
-	res.append_str(bin(len(tables.std_huffman_DC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
-	res.append_byte(0x01)												# DC1
-	for item in tables.std_huffman_DC1:
-		res.append_byte(item)											# 哈夫曼表内容
-	# DHT_AC1
-	res.append_str(bin(0xffc4)[2:].zfill(16))
-	res.append_str(bin(len(tables.std_huffman_AC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
-	res.append_byte(0x11)												# AC1
-	for item in tables.std_huffman_AC1:
-		res.append_byte(item)											# 哈夫曼表内容
+	if not gray:
+		# DHT_DC1
+		res.append_str(bin(0xffc4)[2:].zfill(16))
+		res.append_str(bin(len(tables.std_huffman_DC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
+		res.append_byte(0x01)												# DC1
+		for item in tables.std_huffman_DC1:
+			res.append_byte(item)											# 哈夫曼表内容
+		# DHT_AC1
+		res.append_str(bin(0xffc4)[2:].zfill(16))
+		res.append_str(bin(len(tables.std_huffman_AC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
+		res.append_byte(0x11)												# AC1
+		for item in tables.std_huffman_AC1:
+			res.append_byte(item)											# 哈夫曼表内容
 	# SOS
 	res.append_str(bin(0xffda)[2:].zfill(16))
-	res.append_str(bin(12)[2:].zfill(16))		# 扫描开始信息字节数
-	res.append_byte(3)							# 颜色分量数: 3
-	res.append_str(bin(0x0100)[2:].zfill(16))	# 颜色分量1 DC、AC使用的哈夫曼表ID
-	res.append_str(bin(0x0211)[2:].zfill(16))	# 颜色分量2 DC、AC使用的哈夫曼表ID
-	res.append_str(bin(0x0311)[2:].zfill(16))	# 颜色分量3 DC、AC使用的哈夫曼表ID
-	res.append_str(bin(0x003f00)[2:].zfill(24))	# 固定值
+	res.append_str(bin(8 if gray else 12)[2:].zfill(16))	# 扫描开始信息字节数
+	res.append_byte(1 if gray else 3)						# 颜色分量数: 3
+	res.append_str(bin(0x0100)[2:].zfill(16))				# 颜色分量1 DC、AC使用的哈夫曼表ID
+	if not gray:
+		res.append_str(bin(0x0211)[2:].zfill(16))			# 颜色分量2 DC、AC使用的哈夫曼表ID
+		res.append_str(bin(0x0311)[2:].zfill(16))			# 颜色分量3 DC、AC使用的哈夫曼表ID
+	res.append_str(bin(0x003f00)[2:].zfill(24))				# 固定值
 	return res
 
 # 量化
