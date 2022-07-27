@@ -52,54 +52,40 @@ def decode_DHT(data: np.ndarray) -> int:
 		return None
 	return 0
 
-def decode_head(data: np.ndarray) -> int:
+def decode_head(data: np.ndarray, gray=False) -> int:
 	nowIdx = 0
 	# SOI
-	if data[nowIdx] != 0xff or data[nowIdx+1] != 0xd8:
-		return None
+	assert data[nowIdx] == 0xff and data[nowIdx+1] == 0xd8, 'SOI not found'
 	# APP0
 	nowIdx += 2
-	if data[nowIdx] != 0xff or data[nowIdx+1] != 0xe0:
-		return None
+	assert data[nowIdx] == 0xff and data[nowIdx+1] == 0xe0, 'APP0 not found'
 	nowLen = (data[nowIdx+2] << 8) | data[nowIdx+3]
 	nowIdx += 2 + nowLen
 	# DQT_0
-	if data[nowIdx] != 0xff or data[nowIdx+1] != 0xdb:
-		return None
+	assert data[nowIdx] == 0xff and data[nowIdx+1] == 0xdb, 'DQT_0 not found'
 	nowLen = (data[nowIdx+2] << 8) | data[nowIdx+3]
-	if nowLen != 67:
-		return None
-	if data[nowIdx+4] >> 4 != 0:
-		return None
+	assert nowLen == 67 and data[nowIdx+4] >> 4 == 0, 'only support 8bit quantization table'
 	global quant_dict
 	nowtable = zz2block(data[nowIdx+5:nowIdx+69])
 	quant_dict[data[nowIdx+4] & 0x0f] = nowtable.copy()
 	nowIdx += 2 + nowLen
 	# DQT_1
-	if data[nowIdx] != 0xff or data[nowIdx+1] != 0xdb:
-		return None
+	assert data[nowIdx] == 0xff and data[nowIdx+1] == 0xdb, 'DQT_1 not found'
 	nowLen = (data[nowIdx+2] << 8) | data[nowIdx+3]
-	if nowLen != 67:
-		return None
-	if data[nowIdx+4] >> 4 != 0:
-		return None
+	assert nowLen == 67 and data[nowIdx+4] >> 4 == 0, 'only support 8bit quantization table'
 	nowtable = zz2block(data[nowIdx+5:nowIdx+69])
 	quant_dict[data[nowIdx+4] & 0x0f] = nowtable.copy()
 	nowIdx += 2 + nowLen
 	# SOF0
-	if data[nowIdx] != 0xff or data[nowIdx+1] != 0xc0:
-		return None
+	assert data[nowIdx] == 0xff and data[nowIdx+1] == 0xc0, 'SOF0 not found'
 	nowLen = (data[nowIdx+2] << 8) | data[nowIdx+3]
-	if data[nowIdx+4] != 8:
-		return None
+	assert data[nowIdx+4] == 8, 'only support 8bit color'
 	global h, w, d
 	h = (data[nowIdx+5] << 8) | data[nowIdx+6]
 	w = (data[nowIdx+7] << 8) | data[nowIdx+8]
 	d = data[nowIdx+9]
-	if d != 3:
-		return None
-	if data[nowIdx+11] != 17 or data[nowIdx+14] != 17 or data[nowIdx+17] != 17:
-		return None
+	assert h > 0 and w > 0 and (d == 1 or d == 3), 'invalid image size'
+	assert data[nowIdx+11] == 17 and data[nowIdx+14] == 17 and data[nowIdx+17] == 17, 'invalid sampling'
 	global color_quant_dict
 	color_quant_dict[data[nowIdx+10]] = quant_dict[data[nowIdx+12]]
 	color_quant_dict[data[nowIdx+13]] = quant_dict[data[nowIdx+15]]
@@ -109,15 +95,12 @@ def decode_head(data: np.ndarray) -> int:
 	while data[nowIdx] == 0xff and data[nowIdx+1] == 0xc4:
 		nowLen = (data[nowIdx+2] << 8) | data[nowIdx+3]
 		status = decode_DHT(data[nowIdx+4:nowIdx+2+nowLen])
-		if status is None:
-			return None
+		assert status is not None, 'DHT decode error'
 		nowIdx += 2 + nowLen
 	# SOS
-	if data[nowIdx] != 0xff or data[nowIdx+1] != 0xda:
-		return None
+	assert data[nowIdx] == 0xff and data[nowIdx+1] == 0xda, 'SOS not found'
 	nowLen = (data[nowIdx+2] << 8) | data[nowIdx+3]
-	if data[nowIdx+4] != 3:
-		return None
+	assert data[nowIdx+4] == 3 or data[nowIdx+4] == 1, 'only support RGB and Gray image'
 	global DC_color_huffman_dict
 	for i in range(d):
 		DC_color_huffman_dict[data[nowIdx+5+2*i]] = DHTs_DC[data[nowIdx+6+2*i] >> 4]
