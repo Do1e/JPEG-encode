@@ -4,6 +4,7 @@ import numpy as np
 import decoder_utils
 
 def JPEG_decoder(data: np.ndarray, show=False) -> np.ndarray:
+	assert data.dtype == np.uint8
 	nowIdx = decoder_utils.decode_head(data)
 	if nowIdx is None or data[-2] != 0xff or data[-1] != 0xd9:
 		print("Error: unsupported jpeg format")

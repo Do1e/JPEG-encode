@@ -6,6 +6,8 @@ import encoder_utils
 import common_utils
 
 def JPEG_encoder(img: np.ndarray, quality=95, show=False) -> np.ndarray:
+	assert img.shape[2] == 3
+	assert img.dtype == np.uint8
 	tables.gen_quant_table(quality)
 	resList = []
 	YCrCb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
