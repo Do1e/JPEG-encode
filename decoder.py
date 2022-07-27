@@ -19,8 +19,12 @@ if nowIdx is None or data[-2] != 0xff or data[-1] != 0xd9:
 	exit(1)
 data = data[nowIdx:-2]
 
-YCbCr = np.zeros((decoder_utils.h, decoder_utils.w, decoder_utils.d), np.uint8)
-last_block_dc = [0, 0, 0]
+if decoder_utils.d == 1:
+	YCbCr = np.zeros((decoder_utils.h, decoder_utils.w), np.uint8)
+	last_block_dc = [0]
+else:
+	YCbCr = np.zeros((decoder_utils.h, decoder_utils.w, decoder_utils.d), np.uint8)
+	last_block_dc = [0, 0, 0]
 nowLeft = 0
 nowRight = 0
 nowx = 0
@@ -29,7 +33,10 @@ nowIdx, buffer = decoder_utils.load_buffer(data, '', 0)
 
 while 1:
 	print("%5.2f%%" % (nowIdx / len(data)*100), end="")
-	nowblock_decoded = np.zeros((8, 8, decoder_utils.d), np.int16)
+	if decoder_utils.d == 1:
+		nowblock_decoded = np.zeros((8, 8), np.int16)
+	else:
+		nowblock_decoded = np.zeros((8, 8, decoder_utils.d), np.int16)
 	for i in range(1, decoder_utils.d+1):
 		nowblock = np.zeros((64), np.int16)
 		nowblockIdx = 0
@@ -97,9 +104,13 @@ while 1:
 		nowblock_idct = cv2.idct(nowblock_dequt.astype(np.float32)).round() + 128
 		nowblock_idct[nowblock_idct < 0] = 0
 		nowblock_idct[nowblock_idct > 255] = 255
-		nowblock_decoded[:, :, i-1] = nowblock_idct.astype(np.uint8)
+		if decoder_utils.d == 3:
+			nowblock_decoded[:, :, i-1] = nowblock_idct.astype(np.uint8)
 	print("\b\b\b\b\b\b\b\b\b\b", end="")
-	YCbCr[nowx:nowx+8, nowy:nowy+8, :] = nowblock_decoded
+	if decoder_utils.d == 3:
+		YCbCr[nowx:nowx+8, nowy:nowy+8, :] = nowblock_decoded
+	else:
+		YCbCr[nowx:nowx+8, nowy:nowy+8] = nowblock_idct.astype(np.uint8)
 	nowy += 8
 	if nowy >= decoder_utils.w:
 		nowy = 0
@@ -107,11 +118,14 @@ while 1:
 		if nowx >= decoder_utils.h:
 			break
 
-YCrCb = np.zeros((decoder_utils.h, decoder_utils.w, decoder_utils.d), np.uint8)
-YCrCb[:, :, 0] = YCbCr[:, :, 0]
-YCrCb[:, :, 1] = YCbCr[:, :, 2]
-YCrCb[:, :, 2] = YCbCr[:, :, 1]
-BGR = cv2.cvtColor(YCrCb, cv2.COLOR_YCrCb2BGR)
+if decoder_utils.d == 3:
+	YCrCb = np.zeros((decoder_utils.h, decoder_utils.w, decoder_utils.d), np.uint8)
+	YCrCb[:, :, 0] = YCbCr[:, :, 0]
+	YCrCb[:, :, 1] = YCbCr[:, :, 2]
+	YCrCb[:, :, 2] = YCbCr[:, :, 1]
+	BGR = cv2.cvtColor(YCrCb, cv2.COLOR_YCrCb2BGR)
+else:
+	BGR = YCbCr
 if not args.output.endswith('.bmp'):
 	pos = args.output.rfind('.')
 	args.output = args.output[:pos] + '.bmp'
