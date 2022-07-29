@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-import tables
+import JPEGtables
 import encoder_utils
 import common_utils
 
@@ -11,7 +11,7 @@ def JPEG_encoder(img: np.ndarray, quality=95, gray=False, show=False) -> np.ndar
 	else:
 		assert len(img.shape) == 2
 	assert img.dtype == np.uint8
-	tables.gen_quant_table(quality)
+	JPEGtables.gen_quant_table(quality)
 	resList = []
 	h, w = img.shape[:2]
 	if((h % 8 == 0) and (w % 8 == 0)):
@@ -29,10 +29,10 @@ def JPEG_encoder(img: np.ndarray, quality=95, gray=False, show=False) -> np.ndar
 	buffer = encoder_utils.Byte_Buffer()
 	buffer.append_buffer(encoder_utils.write_head(h, w, gray))
 	buffer.flush_api(resList, header=True)
-	DC0 = common_utils.DHT2tbl(tables.std_huffman_DC0)
-	DC1 = common_utils.DHT2tbl(tables.std_huffman_DC1)
-	AC0 = common_utils.DHT2tbl(tables.std_huffman_AC0)
-	AC1 = common_utils.DHT2tbl(tables.std_huffman_AC1)
+	DC0 = common_utils.DHT2tbl(JPEGtables.std_huffman_DC0)
+	DC1 = common_utils.DHT2tbl(JPEGtables.std_huffman_DC1)
+	AC0 = common_utils.DHT2tbl(JPEGtables.std_huffman_AC0)
+	AC1 = common_utils.DHT2tbl(JPEGtables.std_huffman_AC1)
 	last_block_ydc = 0
 	last_block_cbdc = 0
 	last_block_crdc = 0

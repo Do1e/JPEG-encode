@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import argparse
 
-import tables
+import JPEGtables
 import encoder_utils
 import common_utils
 
@@ -43,10 +43,10 @@ buffer = encoder_utils.Byte_Buffer()
 buffer.append_buffer(encoder_utils.write_head(h, w, args.gray))
 buffer.flush(fp, header=True)
 # 换算出哈夫曼字典
-DC0 = common_utils.DHT2tbl(tables.std_huffman_DC0)
-DC1 = common_utils.DHT2tbl(tables.std_huffman_DC1)
-AC0 = common_utils.DHT2tbl(tables.std_huffman_AC0)
-AC1 = common_utils.DHT2tbl(tables.std_huffman_AC1)
+DC0 = common_utils.DHT2tbl(JPEGtables.std_huffman_DC0)
+DC1 = common_utils.DHT2tbl(JPEGtables.std_huffman_DC1)
+AC0 = common_utils.DHT2tbl(JPEGtables.std_huffman_AC0)
+AC1 = common_utils.DHT2tbl(JPEGtables.std_huffman_AC1)
 
 last_block_ydc = 0
 last_block_cbdc = 0

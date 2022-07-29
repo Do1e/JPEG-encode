@@ -2,7 +2,7 @@ from __future__ import annotations
 import numpy as np
 from struct import pack
 
-import tables
+import JPEGtables
 import common_utils
 
 # 比特缓存，每8位保存到列表中
@@ -135,7 +135,7 @@ def write_head(h: int, w: int, gray=False) -> Byte_Buffer:
 	res.append_str(bin(0xffdb)[2:].zfill(16))
 	res.append_str(bin(64+3)[2:].zfill(16))			# 量化表字节数
 	res.append_byte(0x00)							# 量化表精度: 8bit(0)  量化表ID: 0
-	tbl = block2zz(tables.std_luminance_quant_tbl)
+	tbl = block2zz(JPEGtables.std_luminance_quant_tbl)
 	for item in tbl:
 		res.append_byte(item)						# 量化表0内容
 	if not gray:
@@ -143,7 +143,7 @@ def write_head(h: int, w: int, gray=False) -> Byte_Buffer:
 		res.append_str(bin(0xffdb)[2:].zfill(16))
 		res.append_str(bin(64+3)[2:].zfill(16))			# 量化表字节数
 		res.append_byte(0x01)							# 量化表精度: 8bit(0)  量化表ID: 1
-		tbl = block2zz(tables.std_chrominance_quant_tbl)
+		tbl = block2zz(JPEGtables.std_chrominance_quant_tbl)
 		for item in tbl:
 			res.append_byte(item)						# 量化表1内容
 	# SOF0
@@ -162,28 +162,28 @@ def write_head(h: int, w: int, gray=False) -> Byte_Buffer:
 		res.append_str(bin(0x1101)[2:].zfill(16))			# 水平垂直采样因子: 1  使用的量化表ID: 1
 	# DHT_DC0
 	res.append_str(bin(0xffc4)[2:].zfill(16))
-	res.append_str(bin(len(tables.std_huffman_DC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
+	res.append_str(bin(len(JPEGtables.std_huffman_DC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
 	res.append_byte(0x00)												# DC0
-	for item in tables.std_huffman_DC0:
+	for item in JPEGtables.std_huffman_DC0:
 		res.append_byte(item)											# 哈夫曼表内容
 	# DHT_AC0
 	res.append_str(bin(0xffc4)[2:].zfill(16))
-	res.append_str(bin(len(tables.std_huffman_AC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
+	res.append_str(bin(len(JPEGtables.std_huffman_AC0)+3)[2:].zfill(16))	# 哈夫曼表字节数
 	res.append_byte(0x10)												# AC0
-	for item in tables.std_huffman_AC0:
+	for item in JPEGtables.std_huffman_AC0:
 		res.append_byte(item)											# 哈夫曼表内容
 	if not gray:
 		# DHT_DC1
 		res.append_str(bin(0xffc4)[2:].zfill(16))
-		res.append_str(bin(len(tables.std_huffman_DC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
+		res.append_str(bin(len(JPEGtables.std_huffman_DC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
 		res.append_byte(0x01)												# DC1
-		for item in tables.std_huffman_DC1:
+		for item in JPEGtables.std_huffman_DC1:
 			res.append_byte(item)											# 哈夫曼表内容
 		# DHT_AC1
 		res.append_str(bin(0xffc4)[2:].zfill(16))
-		res.append_str(bin(len(tables.std_huffman_AC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
+		res.append_str(bin(len(JPEGtables.std_huffman_AC1)+3)[2:].zfill(16))	# 哈夫曼表字节数
 		res.append_byte(0x11)												# AC1
-		for item in tables.std_huffman_AC1:
+		for item in JPEGtables.std_huffman_AC1:
 			res.append_byte(item)											# 哈夫曼表内容
 	# SOS
 	res.append_str(bin(0xffda)[2:].zfill(16))
@@ -202,10 +202,10 @@ def write_head(h: int, w: int, gray=False) -> Byte_Buffer:
 def quantize(block: np.ndarray, dim: int) -> np.ndarray:
 	if(dim == 0):
 		# 使用亮度量化表
-		qarr = tables.std_luminance_quant_tbl
+		qarr = JPEGtables.std_luminance_quant_tbl
 	else:
 		# 使用色度量化表
-		qarr = tables.std_chrominance_quant_tbl
+		qarr = JPEGtables.std_chrominance_quant_tbl
 	return (block.astype(np.float32) / qarr.astype(np.float32)).round().astype(np.int16)
 
 # 0的行程编码
